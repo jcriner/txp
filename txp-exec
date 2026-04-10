@@ -1,0 +1,76 @@
+#!/usr/bin/env zsh
+
+# txp-exec - Validate and execute a text command against input
+#
+# Called by txp's fzf --preview. Not intended for direct use.
+#
+# Usage: txp-exec <input-file> <command-string>
+
+setopt err_exit no_unset pipe_fail
+
+INPUT_FILE=$1
+CMD=${2:-}
+
+if [[ -z $CMD ]]; then
+    print "Type a command to preview..."
+    print ""
+    print "Examples:"
+# TODO: tr, sort, sed, awk, grep, jq, cut, head
+    exit 0
+fi
+
+# --- Safety checks ---
+
+# Block dangerous shell expansions: backticks, $(), >(), <(
+if [[ $CMD =~ '`|\$\(|>\(|<\(' ]]; then
+    print "Blocked: shell expansion not allowed"
+    print ""
+    print 'Subshell expressions (`...`, $(...), >(...), <(...))'
+    print "are not permitted for safety."
+    exit 0
+fi
+
+# Block semilcolons, &&, ||
+if [[ $CMD =~ ';|&&\\|\|' ]]; then
+    print "Blocked: command chaining not allowed"
+    print ""
+    print "Use pipes (|) to chain commands instead of ; && ||"
+    exit 0
+fi
+
+# Block output redirects
+if [[ $CMD =~ '(^|[^|])\s*>[^(]|>>' ]]; then
+    print "Blocked: output redirection not allowed"
+    print ""
+    print "txp shows output in the preview pane."
+    print "Use Ctrl-Y to copy output to clipboard."
+    exit 0
+fi
+
+# --- Allowlist ---
+
+typeset -aU allowed=(
+    awk cat col colrm column comm csplit cut expand fmt fold grep head
+    join jq look nl od paste pr rev sed sort split strings
+    tail tee tr uniq wc xargs
+)
+
+# Validate each pipe segment's first word
+local segments=("${(@s:|:)CMD}")
+for segment in $segments; do
+    local trimmed=${segment##[[:space:]]#}
+    local first_word=${trimmed%% *}
+    [[ -z $first_word ]] && continue
+
+    if (( ! ${allowed[(Ie)$first_word]} )); then
+        print "Unknown command: '$first_word'"
+        print ""
+        print "Allowed commands:"
+        print "  ${(j: :)allowed}" | fmt -w 60
+        exit 0
+    fi
+done
+
+# --- Execute ---
+
+eval "cat $INPUT_FILE | $CMD" 2>&1

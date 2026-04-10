@@ -1,0 +1,68 @@
+#!/usr/bin/env zsh
+
+# txp-docs - Documentation helper for txp
+#
+# Modes:
+#   txp-docs --oneline <command-string>   One-line synopsis (for fzf header)
+#   txp-docs <command_string>             Full man page excerpt (for Ctrl-D)
+
+setopt err_exit no_unset pipe_fail
+
+ONELINE=0
+if [[ ${1:-} == "--oneline" ]]; then
+    ONELINE=1
+    shift
+fi
+
+CMD=${1:-}
+DEFAULT_HEADER="  Ctrl-D: docs   Ctrl-Y: copy   Ctrl-R: toggle layout"
+
+if [[ -z $CMD ]]; then
+    (( ONELINE )) && print $DEFAULT_HEADER || print "No command specified."
+    exit 0
+fi
+
+# Extract first command from a pipeline
+local first_cmd=${CMD%%|*}
+first_cmd=${first_cmd##[[:space:]]#}
+first_cmd=${first_cmd%% *}
+
+if [[ -z $first_cmd ]]; then
+    (( ONELINE )) && print $DEFAULT_HEADER
+    exit 0
+fi
+
+# --- One-liner synopses ---
+
+# TODO
+
+typeset -A synopses=(
+    awk     "awk - pattern scanning and processing: Usage: awk [-F fs] [-v var=val] 'program' [file ...]"
+    cat     "TODO"
+    # TODO
+)
+
+if (( ONELINE )); then
+    if (( ${+synopses[$first_cmd]} )); then
+        print "  $synopses[$first_cmd]"
+    else
+        print "  $first_cmd - Ctrl-D: docs   Ctrl-Y: copy    Ctrl-R: toggle layout"
+    fi
+    exit 0
+fi
+
+# --- Full documentation mode ---
+
+print "ONELINE value is $ONELINE"
+print "=== $first_cmd ==="
+print ""
+
+if man $first_cmd 2>/dev/null | col -bx | head -120; then
+    :
+elif $first_cmd --help 2>&1 | head -60; then
+    :
+elif (( ${+synopses[$first_cmd]} )); then
+    print $synopses[$first_cmd]
+else
+    print "No documentation found for '$first_cmd'"
+fi

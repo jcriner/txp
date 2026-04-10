@@ -1,0 +1,124 @@
+#!/usr/bin/env zsh
+
+# txp - Live text manipulation preview
+#
+# Interactive tool for previewing text manipulation commands (tr, sed, awk
+# jq, etc.) against input text. Type a command and see live output.
+#
+# Usage: txp [OPTIONS] [file]
+#        command | txp
+#
+# Options:
+#   -s, --sample NAME   use built-in sample: json, TODO other
+#   -h, --help          Show this help
+#
+# Keybindings:
+#   Type       Live preview updates
+#   Enter      Print output to stdout, command to stderr
+#   Ctrl-D     Show man page for current command
+#   Ctrl-Y     Copy output to clipboard
+#   Ctrl-R     Toggle preview position (right / bottom)
+#   Esc        Quit without output
+#
+# Examples:
+#   txp                     # default sample text
+#   txp data.txt            # use file as input
+#   echo "a:b:c" | txp      # use stdin
+#   txp -s json             # JSON sample data
+#
+# Dependencies: fzf
+
+setopt err_exit no_unset pipe_fail
+
+SCRIPT_DIR=${0:A:h}
+
+sample_name=""
+input_file=""
+
+while (( $# )); do
+    case $1 in
+    -s|--sample) sample_name=$2; shift 2 ;;
+    -h|--help)   head -n 30 $0 | tail -n +2 | sed -E 's/^# ?//'; exit 0 ;;
+    *)           input_file=$1; shift ;;
+    esac
+done
+
+# --- Sample data ---
+
+# TODO
+default_sample() {
+    cat <<'SAMPLE'
+The quick brown fox jumps over the lazy dog.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+SAMPLE
+}
+
+sample_json() {
+    cat <<'SAMPLE'
+{"id":1,"name":"Alice","email":"alice@example.com","tags":["admin","dev"],"active":true,"score":95}
+{"id":2,"name":"Bob","email":"bob@example.com","tags":["dev"],"active":false,"score":87}
+{"id":3,"name":"Charlie","email":"charlie@example.com","tags":["ops","dev"],"active":true,"score":72}
+SAMPLE
+}
+
+# --- Resolve input ---
+
+TMPFILE=$(mktemp "${TMPDIR:-/tmp}/txp.XXXXXX")
+trap 'rm -f $TMPFILE' EXIT
+
+if [[ -n $sample_name ]]; then
+    case $sample_name in
+    json) sample_json > $TMPFILE ;;
+# TODO: other file names
+    *)
+        print -u2 "Unknown sample: $sample_name"
+        print -u2 "Available: json"
+        exit 1
+        ;;
+    esac
+elif [[ -n $input_file ]]; then
+    if [[ ! -f $input_file ]];  then
+        print -u2 "File not found: $input_file"
+        exit 1
+    fi
+    cp $input_file $TMPFILE
+elif [[ ! -t 0 ]]; then
+    cat > $TMPFILE
+else
+    default_sample > $TMPFILE
+fi
+
+# --- Launch fzf ---
+
+HEADER="  Ctrl-D: docs   Ctrl-Y: copy   Ctrl-R: toggle layout"
+if [[ -n ${TXP_HEADER:-} ]]; then
+    HEADER="$TXP_HEADER
+$HEADER"
+fi
+
+result=$(cat $TMPFILE | fzf \
+    --disabled \
+    --print-query \
+    --query "" \
+    --prompt 'cmd> ' \
+    --header $HEADER \
+    --header-first \
+    --layout reverse \
+    --preview "$SCRIPT_DIR/txp-exec $TMPFILE {q}" \
+    --preview-window 'right,50%,border-left,wrap' \
+    --preview-label ' OUTPUT ' \
+    --border-label "${TXP_BORDER_LABEL:- INPUT }" \
+    --bind "change:transform-header:$SCRIPT_DIR/txp-header {q}" \
+    --bind "ctrl-d:preview($SCRIPT_DIR/txp-docs {q})" \
+    --bind "ctrl-y:execute-silent($SCRIPT_DIR/txp-exec $TMPFILE {q} | pbcopy)" \
+    --bind 'ctrl-r:change-preview-window(down,50%,border-top,wrap|right,50%,border-left,wrap)' \
+    --no-sort \
+) || exit 0
+
+# First line of output is the query  (the command typed)
+cmd=${result%%$'\n'*}
+
+if [[ -n $cmd ]]; then
+    print -u2 "# $cmd"
+    $SCRIPT_DIR/txp-exec $TMPFILE $cmd
+fi

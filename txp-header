@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+# txp-header - Combine TXP_HEADER with txp-docs oneline for fzf header
+# Called by txp's change:transform-header binding. Not intended for direct use.
+SCRIPT_DIR=${0:A:h}
+[[ -n ${TXP_HEADER:-} ]] && print -r -- "$TXP_HEADER"
+$SCRIPT_DIR/txp-docs --oneline "$@"
