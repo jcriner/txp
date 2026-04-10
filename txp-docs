@@ -34,12 +34,38 @@ fi
 
 # --- One-liner synopses ---
 
-# TODO
-
 typeset -A synopses=(
-    awk     "awk - pattern scanning and processing: Usage: awk [-F fs] [-v var=val] 'program' [file ...]"
-    cat     "TODO"
-    # TODO
+    awk      "awk - pattern scanning and processing: awk [-F fs] [-v var=val] 'program' [file ...]"
+    cat      "cat - concatenate and print files: cat [-nbE] [file ...]"
+    col      "col - filter reverse line feeds from input: col [-bfhx] [-l num]"
+    colrm    "colrm - remove columns from a file: colrm [start [stop]]"
+    column   "column - columnate lists: column [-t] [-s sep] [file ...]"
+    comm     "comm - compare two sorted files line by line: comm [-123] file1 file2"
+    csplit   "csplit - split a file into sections determined by context lines: csplit [options] file patterns"
+    cut      "cut - remove sections from each line of files: cut [-bcf] [-d delim] [file ...]"
+    expand   "expand - convert tabs to spaces: expand [-t tabstop] [file ...]"
+    fmt      "fmt - simple optimal text formatter: fmt [-w width] [file ...]"
+    fold     "fold - wrap each input line to fit in specified width: fold [-bs] [-w width] [file ...]"
+    grep     "grep - print lines matching a pattern: grep [-ivnE] pattern [file ...]"
+    head     "head - output the first part of files: head [-n lines] [file ...]"
+    join     "join - relational database operator: join [-1 field] [-2 field] [-t char] file1 file2"
+    jq       "jq - command-line JSON processor: jq [options] 'filter' [file ...]"
+    look     "look - display lines beginning with a given string: look [-dff] string [file]"
+    nl       "nl - number lines of files: nl [-ba] [-s sep] [file ...]"
+    od       "od - dump files in octal and other formats: od [-abcdfhilovx] [file]"
+    paste    "paste - merge lines of files: paste [-d delim] [-s] [file ...]"
+    pr       "pr - convert text files for printing: pr [+page] [-column] [-at] [file ...]"
+    rev      "rev - reverse lines characterwise: rev [file ...]"
+    sed      "sed - stream editor for filtering/transforming text: sed [-Ene] 'script' [file ...]"
+    sort     "sort - sort lines of text files: sort [-nrhut] [-k key] [file ...]"
+    split    "split - split a file into pieces: split [-l line_count] [-b bytes] [file [prefix]]"
+    strings  "strings - print the strings of printable characters in files: strings [-afo] [file ...]"
+    tail     "tail - output the last part of files: tail [-n lines] [-f] [file ...]"
+    tee      "tee - read from standard input and write to standard output and files: tee [-a] [file ...]"
+    tr       "tr - translate or delete characters: tr [-cdst] set1 [set2]"
+    uniq     "uniq - report or omit repeated lines: uniq [-cdu] [file [output]]"
+    wc       "wc - print newline, word, and byte counts: wc [-clmw] [file ...]"
+    xargs    "xargs - build and execute command lines from standard input: xargs [-n num] [-I str] [command]"
 )
 
 if (( ONELINE )); then
