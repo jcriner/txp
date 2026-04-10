@@ -45,20 +45,64 @@ done
 
 # --- Sample data ---
 
-# TODO
-default_sample() {
+sample_json() {
     cat <<'SAMPLE'
-The quick brown fox jumps over the lazy dog.
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+{"id": 101, "user": "alice", "meta": {"ip": "192.168.1.5", "role": "admin"}, "tags": ["prod", "web"], "latency": 45}
+{"id": 102, "user": "bob",   "meta": {"ip": "192.168.1.12", "role": "dev"},  "tags": ["test"], "latency": 120}
+{"id": 103, "user": "charlie", "meta": {"ip": "10.0.0.42", "role": "ops"},   "tags": ["prod", "db"], "latency": 88}
 SAMPLE
 }
 
-sample_json() {
+sample_csv() {
     cat <<'SAMPLE'
-{"id":1,"name":"Alice","email":"alice@example.com","tags":["admin","dev"],"active":true,"score":95}
-{"id":2,"name":"Bob","email":"bob@example.com","tags":["dev"],"active":false,"score":87}
-{"id":3,"name":"Charlie","email":"charlie@example.com","tags":["ops","dev"],"active":true,"score":72}
+id,username,department,salary,join_date
+1,jdoe,Engineering,95000,2021-03-15
+2,asmith,Sales,82000,2022-11-01
+3,rlee,Marketing,78000,2023-01-10
+4,bwayne,Engineering,115000,2020-05-22
 SAMPLE
+}
+
+sample_log() {
+    cat <<'SAMPLE'
+2023-10-27 10:15:01 INFO [auth] User 'alice' logged in from 192.168.1.5
+2023-10-27 10:15:42 WARN [db] Connection pool reaching capacity (90%)
+2023-10-27 10:16:12 ERROR [api] 500 Internal Server Error at /v1/upload
+2023-10-27 10:17:05 INFO [auth] User 'bob' logout
+SAMPLE
+}
+
+sample_path() {
+    cat <<'SAMPLE'
+/usr/local/bin/python3
+/etc/nginx/sites-available/default
+/home/user/documents/reports/annual_2023.pdf
+/var/log/syslog
+SAMPLE
+}
+
+sample_kv() {
+    cat <<'SAMPLE'
+user=alice status=active shell=/bin/zsh uid=1001
+user=bob status=inactive shell=/bin/bash uid=1002
+user=charlie status=active shell=/bin/sh uid=1003
+SAMPLE
+}
+
+default_sample() {
+    print "=== TEXT ==="
+    print "The quick brown fox jumps over the lazy dog."
+    print "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+    print "\n=== CSV ==="
+    sample_csv
+    print "\n=== LOG ==="
+    sample_log
+    print "\n=== PATHS ==="
+    sample_path
+    print "\n=== KEY-VALUE ==="
+    sample_kv
+    print "\n=== JSON ==="
+    sample_json
 }
 
 # --- Resolve input ---
@@ -68,13 +112,16 @@ trap 'rm -f $TMPFILE' EXIT
 
 if [[ -n $sample_name ]]; then
     case $sample_name in
-    json) sample_json > $TMPFILE ;;
-# TODO: other file names
-    *)
-        print -u2 "Unknown sample: $sample_name"
-        print -u2 "Available: json"
-        exit 1
-        ;;
+        json) sample_json > $TMPFILE ;;
+        csv)  sample_csv > $TMPFILE ;;
+        log)  sample_log > $TMPFILE ;;
+        path) sample_path > $TMPFILE ;;
+        kv)   sample_kv > $TMPFILE ;;
+        *)
+            print -u2 "Unknown sample: $sample_name"
+            print -u2 "Available: json, csv, log, path, kv"
+            exit 1
+            ;;
     esac
 elif [[ -n $input_file ]]; then
     if [[ ! -f $input_file ]];  then
