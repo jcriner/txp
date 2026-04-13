@@ -31,7 +31,7 @@ if [[ $CMD =~ '`|\$\(|>\(|<\(' ]]; then
 fi
 
 # Block semilcolons, &&, ||
-if [[ $CMD =~ ';|&&\\|\|' ]]; then
+if [[ $CMD =~ ';|&&\\|\|\|' ]]; then
     print "Blocked: command chaining not allowed"
     print ""
     print "Use pipes (|) to chain commands instead of ; && ||"
